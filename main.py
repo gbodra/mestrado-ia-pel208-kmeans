@@ -24,7 +24,7 @@ def scalar_multiply(c, v):
 
 def vector_mean(vectors):
     n = len(vectors)
-    return scalar_multiply(1/n, vector_sum(vectors))
+    return scalar_multiply(1 / n, vector_sum(vectors))
 
 
 def dot(v, w):
@@ -45,7 +45,7 @@ class KMeans:
         self.means = None
 
     def classify(self, input):
-        return min(range(self.k), key = lambda i: squared_distance(input, self.means[i]))
+        return min(range(self.k), key=lambda i: squared_distance(input, self.means[i]))
 
     def train(self, inputs):
         self.means = random.sample(inputs, self.k)
@@ -55,7 +55,7 @@ class KMeans:
             new_assignments = list(map(self.classify, inputs))
 
             if assignments == new_assignments:
-                return
+                return assignments
 
             assignments = new_assignments
 
@@ -66,20 +66,99 @@ class KMeans:
                     self.means[i] = vector_mean(i_points)
 
 
+def test_class_examples():
+    df = pd.read_csv("./data/aula.txt", header=None)
+    df.columns = ["X", "Y"]
+
+    random.seed(0)
+    inputs = df.values.tolist()
+    clusterer = KMeans(3)
+    result = clusterer.train(inputs)
+    print("Means: ", clusterer.means)
+
+    plt.scatter(df["X"], df["Y"], c=result, marker="o")
+    plt.scatter([x[0] for x in clusterer.means],
+                [x[1] for x in clusterer.means], marker="x", c="red")
+
+    plt.title("Dataset: Slides da Aula")
+    plt.show()
+
+
+def test_iris():
+    df = pd.read_csv("./data/iris.txt", header=None)
+    df.columns = ["Sepal_Lenght", "Sepal_Width", "Petal_Lenght", "Petal_Width", "Class"]
+    df.drop(inplace=True, columns=["Class"])
+
+    random.seed(0)
+    inputs = df.values.tolist()
+    clusterer = KMeans(3)
+    result = clusterer.train(inputs)
+    # Multiplica por 30 somente para melhorar a visualização no gráfico
+    df["Petal_Width"] = df["Petal_Width"] * 30
+    print("Means: ", clusterer.means)
+
+    fig = plt.figure(figsize=[10, 10])
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(df["Sepal_Lenght"], df["Sepal_Width"], df["Petal_Lenght"],
+               s=df["Petal_Width"], c=result, marker="o")
+    ax.scatter([x[0] for x in clusterer.means],
+               [x[1] for x in clusterer.means],
+               [x[2] for x in clusterer.means],
+               s=[x[3] * 30 for x in clusterer.means], marker="x", c="red")
+
+    plt.title("Dataset: Iris")
+    plt.show()
+
+
+def test_haberman():
+    df = pd.read_csv("./data/haberman.data", header=None)
+    df.columns = ["Age", "Year_Operation", "Positive_Axilary_Nodes", "Class"]
+    df.drop(inplace=True, columns=["Class"])
+
+    random.seed(0)
+    inputs = df.values.tolist()
+    clusterer = KMeans(2)
+    result = clusterer.train(inputs)
+    print("Means: ", clusterer.means)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(df["Age"], df["Year_Operation"], df["Positive_Axilary_Nodes"],
+               c=result, marker="o")
+    ax.scatter([x[0] for x in clusterer.means],
+               [x[1] for x in clusterer.means],
+               [x[2] for x in clusterer.means], marker="x", c="red")
+
+    plt.title("Dataset: Haberman")
+    plt.show()
+
+
+def test_container_crane():
+    df = pd.read_csv("./data/Container_Crane_Controller_Data_Set.csv", sep=";")
+    df.drop(inplace=True, columns=["Power"])
+
+    random.seed(0)
+    inputs = df.values.tolist()
+    clusterer = KMeans(3)
+    result = clusterer.train(inputs)
+    print("Means: ", clusterer.means)
+
+    plt.scatter(df["Speed"], df["Angle"], c=result, marker="o")
+    plt.scatter([x[0] for x in clusterer.means],
+                [x[1] for x in clusterer.means], marker="x", c="red")
+
+    plt.title("Dataset: Container Crane")
+    plt.show()
+
+
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-df = pd.read_csv("./data/aula.txt", header=None)
-df.columns = ["X", "Y"]
+test_class_examples()
 
-random.seed(0)
-inputs = df.values.tolist()
-clusterer = KMeans(3)
-clusterer.train(inputs)
-print("Means: ", clusterer.means)
+test_iris()
 
-plt.plot(df["X"], df["Y"], 'o')
-plt.plot([x[0] for x in clusterer.means],
-         [x[1] for x in clusterer.means], 'x')
+test_haberman()
 
-plt.title("Dados brutos")
-plt.show()
+test_container_crane()
